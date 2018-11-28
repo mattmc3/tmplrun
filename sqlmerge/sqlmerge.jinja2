@@ -1,0 +1,29 @@
+merge {{table}} as target
+using (select * from #t) as source
+on ({{join}})
+when not matched by target then
+    insert (
+{%- for column in columns %}
+        {% if not loop.first %},{% else %} {% endif -%}
+        {{ column.name }}
+{%- endfor %}
+    )
+    values (
+{%- for column in columns %}
+        {% if not loop.first %},{% else %} {% endif -%}
+        source.{{ column.name }}
+{%- endfor %}
+    )
+when matched and (
+{%- for column in columns %}
+    {% if not loop.first %}or {% else %}   {% endif -%}
+    target.{{ column.name }} <> source.{{ column.name }}
+{%- endfor %}
+) then
+    update
+{%- for column in columns %}
+       {% if loop.first %}set {% else %}  , {% endif -%}
+           target.{{ column.name }} = source.{{ column.name }}
+{%- endfor %}
+-- output deleted.*, $action, inserted.* into #merge_result
+;
