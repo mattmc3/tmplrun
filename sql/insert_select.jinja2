@@ -1,0 +1,50 @@
+{#-
+SQL INSERT from SELECT
+
+Usage:
+  tmplrun.py sql insert_select [ --schema=SCHEMA --has-identity ] --table=TABLE --columns=COLUMNS
+  tmplrun.py sql insert_select (-h | --help)
+
+Options:
+  -h --help           Show this screen.
+  --schema=SCHEMA     The name of the table schema. Optional.
+  --table=TABLE       The name of the table.
+  --columns=COLUMNS   A comma separated list of the columns in a table.
+  --has-identity      Flag for whethe the table has an identity column
+-#}
+{% set vars = namespace() %}
+{% set vars.schema = args["--schema"] %}
+{% set vars.table = args["--table"] %}
+{% set vars.has_identity = args["--has-identity"] %}
+{% set vars.columns = args["--columns"].split(",") %}
+{% if vars.schema %}
+    {% set vars.tablename = vars.schema + "." + vars.table %}
+{% else %}
+    {% set vars.tablename = vars.table %}
+{% endif %}
+{#- generate INSERT statement -#}
+{% if vars.has_identity %}
+set identity_insert {{ vars.tablename }} on
+{% endif %}
+insert into {{ vars.tablename }} (
+{% for column in vars.columns %}
+    {% if loop.first %}
+        {% set vars.prefix = " " %}
+    {% else %}
+        {% set vars.prefix = "," %}
+    {% endif %}
+    {{ vars.prefix }}{{ column }}
+{% endfor %}
+)
+{% for column in vars.columns %}
+    {% if loop.first %}
+        {% set vars.prefix = "select " %}
+    {% else %}
+        {% set vars.prefix = "     , " %}
+    {% endif -%}
+    {{ vars.prefix }}t.{{ column }}
+{% endfor %}
+  from #{{vars.table}} t
+{% if vars.has_identity %}
+set identity_insert {{ vars.tablename }} off
+{% endif %}

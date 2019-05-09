@@ -5,6 +5,7 @@ Generate Hello, World!
 """
 
 import os
+import sys
 from pathlib import Path
 from jinja2 import Template
 
@@ -17,7 +18,11 @@ def get_tmpl(name):
 
 def main():
     t = Template(get_tmpl("hello"))
-    result = t.render(name="World")
+    if len(sys.argv) < 2:
+        name="World"
+    else:
+        name = ", ".join(sys.argv[1:])
+    result = t.render(name=name)
     print(result)
 
 

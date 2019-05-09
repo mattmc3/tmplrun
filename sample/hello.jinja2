@@ -1,0 +1,11 @@
+{#-
+Hello!
+
+Usage:
+  tmplrun.py sample hello [ NAME ]
+  tmplrun.py sample hello (-h | --help)
+
+Options:
+  -h --help  Show this screen.
+-#}
+Hello, {{ args["NAME"]|default("World",True) }}!

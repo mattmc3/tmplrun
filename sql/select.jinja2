@@ -1,0 +1,29 @@
+{#-
+SQL SELECT
+
+Usage:
+  tmplrun.py sql select [ --schema=SCHEMA ] --table=TABLE --columns=COLUMNS
+  tmplrun.py sql select (-h | --help)
+
+Options:
+  -h --help           Show this screen.
+  --schema=SCHEMA     The name of the table schema. Optional.
+  --table=TABLE       The name of the table.
+  --columns=COLUMNS   A comma separated list of the columns in a table.
+-#}
+{% set vars = namespace() %}
+{% set vars.schema = args["--schema"] %}
+{% set vars.table = args["--table"] %}
+{% set vars.columns = args["--columns"].split(",") %}
+{% if vars.schema %}
+    {% set vars.tablename = vars.schema + "." + vars.table %}
+{% else %}
+    {% set vars.tablename = vars.table %}
+{% endif %}
+{#- generate SELECT statement -#}
+{% for column in vars.columns %}
+    {% if loop.first %}select {% else %}     , {% endif %}t.{{ column }}
+{% endfor %}
+  from {{ vars.tablename }} as t
+ where 1 = 1
+ order by 1

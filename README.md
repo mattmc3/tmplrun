@@ -6,7 +6,7 @@ My collection of Jinja2 templates for data merging and string generation
 
 No install. Just simply clone this repo, set up a Python environment, and go.
 1. `git clone https://github.com/mattmc3/tmplrun.git`
-1. `python3 -venv .venv`
+1. `python3 -m venv .venv`
 1. `source .venv/bin/activate`
 1. `pip install -r requirements.txt`
 

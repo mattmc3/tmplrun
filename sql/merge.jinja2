@@ -1,0 +1,93 @@
+{#-
+SQL MERGE
+
+Usage:
+  tmplrun.py sql merge [ --schema=SCHEMA ] --table=TABLE --columns=COLUMNS
+  tmplrun.py sql merge (-h | --help)
+
+Options:
+  -h --help           Show this screen.
+  --schema=SCHEMA     The name of the table schema. Optional.
+  --table=TABLE       The name of the table.
+  --columns=COLUMNS   A comma separated list of the columns in a table.
+-#}
+{% set vars = namespace() %}
+{% set vars.schema = args["--schema"] %}
+{% set vars.table = args["--table"] %}
+{% set vars.columns = args["--columns"].split(",") %}
+{% if vars.schema %}
+    {% set vars.tablename = vars.schema + "." + vars.table %}
+{% else %}
+    {% set vars.tablename = vars.table %}
+{% endif %}
+{#-
+-- generate MERGE statement
+merge {table_name} as target
+using (select * from #table) as source
+on (target.a = source.a)
+when not matched by target then
+    insert (
+         a
+        ,b
+        ,c
+    )
+    values (
+        source.a
+        ,source.b
+        ,source.c
+    )
+when matched and (
+    target.b <> source.b
+    or target.c <> source.c
+) then
+    update set
+         target.b = source.b
+        ,target.c = source.c
+-- output deleted.*, $action, inserted.* into #merge_result
+;
+-#}
+merge {{ vars.tablename }} as target
+using #{{ vars.table }} as source
+on target.{{ vars.columns[0] }} = source.{{ vars.columns[0] }}
+when not matched by target then
+    insert (
+    {% for column in vars.columns %}
+        {% if loop.first %}
+            {% set vars.prefix = " " %}
+        {% else %}
+            {% set vars.prefix = "," %}
+        {% endif %}
+        {{ vars.prefix }}{{ column }}
+    {% endfor %}
+    )
+    values (
+    {% for column in vars.columns %}
+        {% if loop.first %}
+            {% set vars.prefix = " " %}
+        {% else %}
+            {% set vars.prefix = "," %}
+        {% endif %}
+        {{ vars.prefix }}source.{{ column }}
+    {% endfor %}
+    )
+when matched and (
+{% for column in vars.columns %}
+    {% if loop.first %}
+        {% set vars.prefix = "   " %}
+    {% else %}
+        {% set vars.prefix = "or " %}
+    {% endif %}
+    {{ vars.prefix }}target.{{ column }} <> source.{{ column }}
+{% endfor %}
+) then
+    update
+{% for column in vars.columns %}
+    {% if loop.first %}
+        {% set vars.prefix = "   set " %}
+    {% else %}
+        {% set vars.prefix = "     , " %}
+    {% endif %}
+    {{ vars.prefix }}target.{{ column }} = source.{{ column }}
+{% endfor %}
+-- output deleted.*, $action, inserted.* into #merge_result
+;
