@@ -36,7 +36,7 @@ def main():
     template_str = get_tmpl(args["COMMAND"], args["TEMPLATE"])
 
     xms = re.X | re.M | re.S
-    docopt_header_match = re.match("^\{\#\-?(.*?)\-?\#\}", template_str, xms)
+    docopt_header_match = re.match(r'^\{\#\-?(.*?)\-?\#\}', template_str, xms)
     if docopt_header_match:
         docopt_header = docopt_header_match.groups()[0].strip()
         args = docopt(docopt_header, version=str_ver)
